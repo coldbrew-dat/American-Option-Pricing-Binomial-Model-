@@ -1,4 +1,5 @@
 import math
+import matplotlib.pyplot as plt
 #inputs
 
 def read_positive_float(prompt):
@@ -197,6 +198,84 @@ def main():
     print(f"Decision:                 {decision}")
     
     print("Note: This result is an estimate based on the entered assumptions.")
+
+    show_tree = input("\nDo you want to see the binomial tree? (yes/no): ").strip().lower()
+    if show_tree in ("yes", "y"):
+        display_binomial_tree(
+            stock_price=stock_price,
+            intervals=intervals,
+            time_to_expiry=time_to_expiry,
+            volatility=volatility,
+        )
+
+
+def display_binomial_tree(stock_price, intervals, time_to_expiry, volatility):
+    delta_t = time_to_expiry / intervals
+    up_factor = math.exp(volatility * math.sqrt(delta_t))
+    down_factor = 1 / up_factor
+    tree_values = []
+
+    print("\nBINOMIAL STOCK-PRICE TREE")
+    print("-" * 30)
+
+    for step in range(intervals + 1):
+        values = []
+
+        for up_moves in range(step + 1):
+            stock_price_at_node = (
+                stock_price
+                * (up_factor ** up_moves)
+                * (down_factor ** (step - up_moves))
+            )
+            values.append(f"{stock_price_at_node:.4f}")
+
+        spaces = " " * ((intervals - step) * 4)
+        print(f"Step {step}: {spaces}" + "    ".join(values))
+
+        step_values = []
+        for up_moves in range(step + 1):
+            stock_price_at_node = (
+                stock_price
+                * (up_factor ** up_moves)
+                * (down_factor ** (step - up_moves))
+            )
+            step_values.append(stock_price_at_node)
+        tree_values.append(step_values)
+
+    plt.figure(figsize=(10, 6))
+
+    for step in range(intervals):
+        for up_moves in range(step + 1):
+            current_y = 2 * up_moves - step
+            down_y = 2 * up_moves - (step + 1)
+            up_y = 2 * (up_moves + 1) - (step + 1)
+            plt.plot([step, step + 1], [current_y, down_y], color="gray")
+            plt.plot([step, step + 1], [current_y, up_y], color="gray")
+
+    for step, step_values in enumerate(tree_values):
+        for up_moves, value in enumerate(step_values):
+            y_position = 2 * up_moves - step
+            plt.scatter(step, y_position, color="royalblue", s=600, zorder=2)
+            plt.text(
+                step,
+                y_position,
+                f"{value:.2f}",
+                color="white",
+                ha="center",
+                va="center",
+                fontsize=9,
+                zorder=3,
+            )
+
+    plt.title("Binomial Stock-Price Tree")
+    plt.xlabel("Time Step")
+    plt.ylabel("Up/Down Position")
+    plt.xticks(range(intervals + 1))
+    plt.yticks([])
+    plt.grid(axis="x", linestyle="--", alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
    
 
 
